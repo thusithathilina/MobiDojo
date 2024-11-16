@@ -1,0 +1,74 @@
+<div id="function3" style="max-width: 1200px; margin: 0 auto;">
+    
+    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+        <button id="checkButton" style="width : 100px">Monitor Logs</button>
+        <select id="containerSelect" style="width : 100px; align-content: center;">
+            <option value="ALL">ALL</option>
+        </select>
+
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+        <span style="font-size: 25px"><b>Log Monitor</b></span>
+
+        <div id="counts" style="margin-left: auto;">
+            <span> Errors: <span id="errorCount">0</span></span>
+            <span style="margin-left: 10px;">Warnings: <span id="warningCount">0</span></span>
+        </div>
+    </div>
+
+    <div id="logContainer" style="width: 1200px; height: 150px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px; white-space: pre-wrap; word-wrap: break-word;">
+        <div id="logs" style="font-family: Arial, Helvetica, sans-serif; white-space: pre-wrap; word-wrap: break-word; text-align: left;"></div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('containerSelect').addEventListener('change', function() {
+    var selectedContainer = this.value;
+    fetchLogs(selectedContainer);
+});
+
+document.getElementById('checkButton').addEventListener('click', function() {
+    fetchLogs('ALL');
+});
+
+function fetchLogs(container) {
+    fetch('/function3/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'container=' + encodeURIComponent(container)
+    })
+    .then(response => response.json())
+    .then(data => {
+        var logsDiv = document.getElementById('logs');
+        logsDiv.innerHTML = '';
+        data.logs.forEach(function(log) {
+            var parts = log.split(': ', 2);
+            var containerName = parts[0];
+            var logMessage = parts[1] || '';
+            var logLine = document.createElement('div');
+            logLine.innerHTML = '<strong>' + containerName + '</strong>: ' + logMessage;
+            logLine.style.textAlign = 'left';
+            logLine.style.marginBottom = '2px';
+            logsDiv.appendChild(logLine);
+        });
+        document.getElementById('errorCount').innerText = data.error_count;
+        document.getElementById('warningCount').innerText = data.warning_count;
+        
+        // Update dropdown options only when 'ALL' is selected
+        if (container === 'ALL') {
+            var select = document.getElementById('containerSelect');
+            select.innerHTML = '<option value="ALL">ALL</option>';
+            data.containers.forEach(function(container) {
+                var option = document.createElement('option');
+                option.value = container;
+                option.textContent = container;
+                select.appendChild(option);
+            });
+        }
+    });
+}
+    </script>

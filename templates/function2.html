@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control Panel</title>
+    <style>
+    body {
+        margin: 0;
+        padding: 0;
+    }
+    h1 {
+        margin: 10px 0;
+        text-align: center;
+        font-size: 28px;
+    }
+    .control-panel {
+        max-width: 800px;
+        margin: 20px auto;
+        padding: 0 12px 12px;
+    }
+    .button-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .btn, .btn-neutral {
+        padding: 10px 20px;
+        font-size: 14px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+        height: 40px;
+        width: 100%;
+    }
+    
+    .btn-on {
+        background-color: #4CAF50;
+        color: white;
+    }
+    
+    .btn-off {
+        background-color: #f44336;
+        color: white;
+    }
+    .btn:hover, .btn-neutral:hover  {
+        opacity: 0.8;
+    }
+    
+    .dropdown-section {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    }
+
+    .dropdown {
+    margin: 0 5px;
+    width: calc(50% - 10px);
+    }
+
+    .btn-neutral {
+    background-color: #1aa8cc;
+    color: white;
+    }
+    .dropdown-menu {
+    display: none;
+    position: absolute;
+    background-color: #f9f9f9;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1000;
+    }
+
+    .capture-button {
+    grid-column: 1 / -1;
+    height: 40px;
+    font-size: 14px;
+    background-color: #556fb4;
+}
+    .dropdown-menu a {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    }
+
+    .dropdown-menu a:hover {
+        background-color: #3e4e81}
+
+    .dropdown:hover .dropdown-menu {
+        display: block;
+    }
+
+    .dropdown:hover .btn-neutral {
+    background-color: #40507c;
+    }
+    </style>
+</head>
+<body>
+    <h1>Control Panel</h1>
+    
+    <div class="control-panel">
+        <div class="button-grid">
+            <button class="btn btn-on" onclick="sendCommand('turn_on_core')">Turn On <b>Core Network</b></button>
+            <button class="btn btn-off" onclick="sendCommand('turn_off_core')">Turn Off <b>Core Network</b></button>
+            <button class="btn btn-on" onclick="sendCommand('turn_on_base')">Turn On <b>Base Station</b></button>
+            <button class="btn btn-off" onclick="sendCommand('turn_off_base')">Turn Off <b>Base Station</b></button>
+            <button class="btn btn-on" onclick="sendCommand('turn_on_ue')">Turn On <b>UE</b></button>
+            <button class="btn btn-off" onclick="sendCommand('turn_off_ue')">Turn Off <b>UE</b></button>
+            <button class="btn btn-on" onclick="sendCommand('turn_on_all')">Turn On <b>ALL</b></button>
+            <button class="btn btn-off" onclick="sendCommand('turn_off_all')">Turn Off <b>ALL (KILL)</b></button>
+            <button class="btn btn-neutral capture-button" onclick="sendCommand('capture_core')">Traffic Capture: <b>Core Network</b></button>
+        </div>
+        
+        <div class="dropdown-section">
+            <div class="dropdown">
+                <button class="btn btn-neutral dropdown-toggle" type="button" id="logDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    Save Log
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="logDropdown" id="logContainerList" style="max-height: 200px; overflow-y: auto;">
+                </ul>
+            </div>
+
+            <div class="dropdown">
+                <button class="btn btn-neutral dropdown-toggle" type="button" id="pcapDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    Save Pcap
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="pcapDropdown" id="pcapContainerList" style="max-height: 200px; overflow-y: auto;">
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function sendCommand(command) {
+            fetch('/function2/' + command, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => alert(data.message))
+                .catch(error => console.error('Error:', error));
+        }
+    
+        function saveLog(containerName) {
+            fetch('/function2/save_log/' + containerName, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => alert(data.message))
+                .catch(error => console.error('Error:', error));
+        }
+    
+        function savePcap(containerName) {
+            fetch('/function2/save_pcap/' + containerName, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => alert(data.message))
+                .catch(error => console.error('Error:', error));
+        }
+    
+        function populateDropdowns() {
+            fetch('/function2/get_containers')
+                .then(response => response.json())
+                .then(data => {
+                    const logList = document.getElementById('logContainerList');
+                    const pcapList = document.getElementById('pcapContainerList');
+                    
+                    logList.innerHTML = '';
+                    pcapList.innerHTML = '';
+    
+                    data.containers.forEach(container => {
+                        const logItem = document.createElement('li');
+                        logItem.innerHTML = `<a class="dropdown-item" href="#" onclick="saveLog('${container.name}')">${container.name}</a>`;
+                        logList.appendChild(logItem);
+    
+                        if (container.group === 'UE' || container.group === 'Base Station') {
+                            const pcapItem = document.createElement('li');
+                            pcapItem.innerHTML = `<a class="dropdown-item" href="#" onclick="savePcap('${container.name}')">${container.name}</a>`;
+                            pcapList.appendChild(pcapItem);
+                        }
+                    });
+                })
+                .catch(error => console.error('Error:', error));
+        }
+    
+        document.addEventListener('DOMContentLoaded', function() {
+            populateDropdowns();
+        });
+</script>
+</body>
+</html>

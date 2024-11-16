@@ -1,0 +1,20 @@
+body{
+    font-family: Arial, sans-serif;
+    margin: 0;
+    display: grid;
+    height: 100vh;
+    grid-template-rows: 430px 1fr 1fr;
+    grid-template-columns: 2.7fr 1fr;
+    gap: 10px;
+}
+
+.section{
+    border: 1px solid #ccc;
+    padding: 20px;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+#section4{
+    grid-row: auto / span 2;
+}

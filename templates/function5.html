@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Function 5: 5G Spector, Replay, and PCAP Modifier</title>
+        <style>
+            .function5-container {
+                display: flex;
+                justify-content: space-between;
+                width: 100%;
+                max-width: 1300px;
+                margin: 0 auto;
+            }
+    
+            .function5-container .spector-section {
+                width: 40%;
+                padding: 20px;
+                box-sizing: border-box;
+                border: 1px solid #ccc;
+                border-radius: 5px;
+            }
+    
+            .function5-container .replay-section,
+            .function5-container .pcap-modifier-section {
+                width: 29%;
+                padding: 20px;
+                box-sizing: border-box;
+                border: 1px solid #ccc;
+                border-radius: 5px;
+                display: flex;
+                flex-direction: column;
+            }
+    
+            .function5-container h2 {
+                margin-top: 0;
+            }
+    
+            .function5-container select,
+            .function5-container input[type="file"],
+            .function5-container input[type="number"],
+            .function5-container button {
+                padding: 8px;
+                box-sizing: border-box;
+            }
+    
+            .function5-container button {
+                background-color: #4CAF50;
+                color: white;
+                border: none;
+                cursor: pointer;
+                width: 100%;
+                margin-top: 10px;
+            }
+    
+            .function5-container button:hover {
+                background-color: #45a049;
+            }
+    
+            #message {
+                margin-top: 3px;
+                padding: 10px;
+                background-color: #f0f0f0;
+                border-radius: 5px;
+            }
+    
+            .input-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-end;
+                margin-bottom: 10px;
+            }
+    
+            .input-group {
+                display: flex;
+                flex-direction: column;
+            }
+    
+            .input-label {
+                font-size: 0.8em;
+                margin-bottom: 2px;
+            }
+    
+            #attack-select {
+                flex: 2;
+                margin-right: 10px;
+            }
+    
+            #val1-group, #val2-group {
+                flex: 1;
+                margin-right: 10px;
+            }
+    
+            #addon-select {
+                flex: 1;
+            }
+    
+            #val1, #val2 {
+                width: 100%;
+            }
+    
+            .button-container {
+                margin-top: auto;
+                display: flex;
+                flex-direction: column;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="function5-container">
+            <div class="spector-section">
+                <h2>5G Spector Attack Simulation</h2>
+                <div class="input-row">
+                    <select id="attack-select">
+                        <option value="">Select Attack</option>
+                        <option value="1">BTS Resource Depletion</option>
+                        <option value="2">Blind DoS</option>
+                        <option value="3">Downlink DoS</option>
+                        <option value="4">Downlink IMSI Extractor</option>
+                        <option value="5">Uplink DoS</option>
+                        <option value="6">Uplink IMSI Extractor</option>
+                        <option value="7">Null Cipher / Integrity</option>
+                    </select>
+                    <div id="val1-group" class="input-group">
+                        <label id="val1-label" class="input-label" for="val_1">Val_1</label>
+                        <input type="number" id="val1" placeholder="Val_1">
+                    </div>
+                    <div id="val2-group" class="input-group">
+                        <label id="val2-label" class="input-label" for="val_2">Val_2</label>
+                        <input type="number" id="val2" placeholder="Val_2" disabled>
+                    </div>
+                    <select id="addon-select">
+                        <option value="non-emergency">Non-Emergency</option>
+                        <option value="emergency">Emergency</option>
+                    </select>
+                </div>
+                <button id="launch-spector">Launch</button>
+            </div>
+            <div class="replay-section">
+                <h2>5G Replay</h2>
+                <input type="file" id="pcap-file" accept=".pcap">
+                <div class="button-container">
+                    <button id="launch-replay">Launch</button>
+                </div>
+            </div>
+            <div class="pcap-modifier-section">
+                <h2>PCAP Modifier</h2>
+                <div class="button-container">
+                    <button id="manual-modify">Manual Modify</button>
+                    <button id="auto-modify">Auto Modify</button>
+                </div>
+            </div>
+        </div>
+        <div id="message"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const socket = io();
+            const attackSelect = document.getElementById('attack-select');
+            const val1Input = document.getElementById('val1');
+            const val2Input = document.getElementById('val2');
+            const val1Label = document.getElementById('val1-label');
+            const val2Label = document.getElementById('val2-label');
+            const addonSelect = document.getElementById('addon-select');
+
+            const attackLabels = {
+                '1': { val1: 'Level (1-999)', val2: 'Delay' },
+                '2': { val1: 'Level (1-999)', val2: 'TMSI' },
+                '3': { val1: 'Level (1-999)', val2: '' },
+                '4': { val1: 'Mode (1-4)', val2: '' },
+                '5': { val1: 'Level (1-999)', val2: '' },
+                '6': { val1: 'Level (1-999)', val2: '' },
+                '7': { val1: 'Mode (1-2)', val2: '' }
+            };
+
+            attackSelect.addEventListener('change', function() {
+                const attackType = this.value;
+                val1Input.value = '';
+                val2Input.value = '';
+                val2Input.disabled = true;
+
+                if (attackType === '1' || attackType === '2') {
+                    val2Input.disabled = false;
+                }
+
+                if (attackType === '1' || attackType === '2' || attackType === '3' || attackType === '5' || attackType === '6') {
+                    val1Input.min = 1;
+                    val1Input.max = 999;
+                } else if (attackType === '4') {
+                    val1Input.min = 1;
+                    val1Input.max = 4;
+                } else if (attackType === '7') {
+                    val1Input.min = 1;
+                    val1Input.max = 2;
+                }
+
+                if (attackLabels[attackType]) {
+                    val1Label.textContent = attackLabels[attackType].val1;
+                    val2Label.textContent = attackLabels[attackType].val2;
+                } else {
+                    val1Label.textContent = 'val1';
+                    val2Label.textContent = 'val2';
+                }
+            });
+
+            document.getElementById('launch-spector').addEventListener('click', function() {
+                const attackType = attackSelect.value;
+                const val1 = val1Input.value;
+                const val2 = val2Input.value;
+                const addon = addonSelect.value;
+
+                if (!attackType) {
+                    alert('Please select an attack type');
+                    return;
+                }
+
+                if (!val1) {
+                    alert('Please enter a value for val_1');
+                    return;
+                }
+
+                if ((attackType === '1' || attackType === '2') && !val2) {
+                    alert('Please enter a value for val_2');
+                    return;
+                }
+
+                fetch('/function5/launch_spector', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `attack_type=${attackType}&val1=${val1}&val2=${val2}&addon=${addon}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'error') {
+                        alert(data.message);
+                    } else {
+                        document.getElementById('message').innerText = data.message + ". Please check the new terminal window.";
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            });
+
+            document.getElementById('launch-replay').addEventListener('click', function() {
+                const pcapFile = document.getElementById('pcap-file').files[0];
+                if (pcapFile) {
+                    const formData = new FormData();
+                    formData.append('pcap_file', pcapFile.name);
+                    fetch('/function5/launch_replay', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById('message').innerText = data.message + ". Please check the new terminal window.";
+                    })
+                    .catch(error => console.error('Error:', error));
+                } else {
+                    alert('Please select a PCAP file');
+                }
+            });
+            document.getElementById('manual-modify').addEventListener('click', function() {
+                fetch('/function5/manual_modify', {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('message').innerText = data.message + ". Please check the new terminal window.";
+                })
+                .catch(error => console.error('Error:', error));
+            });
+
+            document.getElementById('auto-modify').addEventListener('click', function() {
+                fetch('/function5/auto_modify', {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('message').innerText = data.message + ". Please check the new terminal window.";
+                })
+                .catch(error => console.error('Error:', error));
+            });
+        });
+    </script>
+</body>
+</html>
