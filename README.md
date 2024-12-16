@@ -12,4 +12,7 @@ Often the dropdown button cannot be grabbed.
 
 ## Major Issues
 ### 1. 5G-Spector Attack Simulation
+I've used a compiled version of "Attack UE", But its volume is too huge to be uploaded on the github. So, I think we should use a docker image. This means that the code must be modified accordingly.
+
 ### 2. 5Greplay
+I should update "install_dependencies.sh" later by using "https://5greplay.org/docs/guide/building-from-source/" this document.
