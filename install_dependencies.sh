@@ -39,6 +39,7 @@ sudo docker pull oaisoftwarealliance/oai-lmf:v2.1.0
 sudo docker pull oaisoftwarealliance/trf-gen-cn5g:latest
 sudo docker pull oaisoftwarealliance/oai-gnb:develop
 sudo docker pull oaisoftwarealliance/oai-nr-ue:develop
+docker pull onehouwong/oai-nr-ue:nr.attack.v2.1.0
 
 
 # Python
