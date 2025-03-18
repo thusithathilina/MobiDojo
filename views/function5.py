@@ -8,6 +8,7 @@ function5_bp = Blueprint('function5', __name__)
 def function5():
     return render_template('function5.html')
 
+
 @function5_bp.route('/launch_spector', methods=['POST'])
 def launch_spector():
     attack_type = request.form.get('attack_type')
@@ -15,49 +16,50 @@ def launch_spector():
     val2 = request.form.get('val2')
     addon = request.form.get('addon')
 
-    base_command = "sudo ./nr-uesoftmodem -O nr-ue.conf -E --sa --rfsim -r 106 --numerology 1 -C 3619200000 --sa --rfsim --rfsimulator.serveraddr 192.168.70.153"
+    # Validate input values
+    valid_ranges = {
+        '1': (1, 999), '2': (1, 999), '3': (1, 999),
+        '4': (1, 4), '5': (1, 999), '6': (1, 999), '7': (1, 2)
+    }
+    
+    if attack_type not in valid_ranges or not val1.isdigit() or not valid_ranges[attack_type][0] <= int(val1) <= valid_ranges[attack_type][1]:
+        return jsonify({"status": "error", "message": f"Invalid val1 for attack type {attack_type}."})
     
     command_map = {
-        '1': f"{base_command} --bts-attack {val1} --bts-delay {val2}",
-        '2': f"{base_command} --blind-dos-attack {val1} --RRC-TMSI {val2}",
-        '3': f"{base_command} --dnlink-dos-attack {val1}",
-        '4': f"{base_command} --dnlink-imsi-extr {val1}",
-        '5': f"{base_command} --uplink-dos-attack {val1}",
-        '6': f"{base_command} --uplink-imsi-extr {val1}",
-        '7': f"{base_command} --null-cipher-integ {val1}"
+        '1': f" --bts-attack {val1} --bts-delay {val2}",
+        '2': f" --blind-dos-attack {val1} --RRC-TMSI {val2}",
+        '3': f" --dnlink-dos-attack {val1}",
+        '4': f" --dnlink-imsi-extr {val1}",
+        '5': f" --uplink-dos-attack {val1}",
+        '6': f" --uplink-imsi-extr {val1}",
+        '7': f" --null-cipher-integ {val1}"
     }
+    
+    command = command_map.get(attack_type, "")
+    if addon == 'emergency':
+        command += " --rrc-911"
+    
+    docker_command = (
+    f"docker run -d --network=host --privileged "
+    f"-v {os.getcwd()}/attack.conf:/opt/oai-nr-ue/etc/nr-ue.conf "
+    f"-e USE_ADDITIONAL_OPTIONS='--rfsim --log_config.global_log_options level,nocolor,time -E --sa -r 106 --numerology 1 -C 3619200000 --rfsimulator.serveraddr 192.168.70.153 {command}' "
+    f"-it onehouwong/oai-nr-ue:nr.attack.v2.1.0 "
+)
+    
+    try:
+        process = subprocess.Popen(docker_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = process.communicate()
+        
+        if process.returncode == 0:
+            container_id = stdout.decode('utf-8').strip()
+            terminal_command = f"gnome-terminal -- bash -c 'docker exec -it {container_id[:12]} /bin/bash; exec bash'"
+            subprocess.Popen(terminal_command, shell=True)
+            return jsonify({"status": "success", "message": f"Attack started in container {container_id[:12]}"})
+        else:
+            return jsonify({"status": "error", "message": f"Failed to start container: {stderr.decode('utf-8')}"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
 
-    # Validate input
-    if attack_type in ['1', '2']:
-        if not val1.isdigit() or not 1 <= int(val1) <= 999:
-            return jsonify({"status": "error", "message": "Invalid val_1. Must be between 1 and 999."})
-    elif attack_type == '3':
-        if not val1.isdigit() or not 1 <= int(val1) <= 999:
-            return jsonify({"status": "error", "message": "Invalid val_1. Must be between 1 and 999."})
-    elif attack_type == '4':
-        if not val1.isdigit() or not 1 <= int(val1) <= 4:
-            return jsonify({"status": "error", "message": "Invalid val_1. Must be between 1 and 4."})
-    elif attack_type in ['5', '6']:
-        if not val1.isdigit() or not 1 <= int(val1) <= 999:
-            return jsonify({"status": "error", "message": "Invalid val_1. Must be between 1 and 999."})
-    elif attack_type == '7':
-        if not val1.isdigit() or not 1 <= int(val1) <= 2:
-            return jsonify({"status": "error", "message": "Invalid val_1. Must be 1 or 2."})
-
-    command = command_map.get(attack_type)
-    if command:
-        if addon == 'emergency':
-            command += " --rrc-911"
-
-        try:
-            build_dir = os.path.expanduser('~/MobiDojo/OAI-5G-nr.attack.v2.1.0/cmaketargets/ranbuild/build')
-            gnome_terminal_command = f"gnome-terminal -- bash -c 'cd {build_dir} && {command}; exec bash'"
-            subprocess.Popen(gnome_terminal_command, shell=True)
-            return jsonify({"status": "success", "message": "Attack launched successfully in a new terminal"})
-        except Exception as e:
-            return jsonify({"status": "error", "message": str(e)})
-    else:
-        return jsonify({"status": "error", "message": "Invalid attack type"})
 
 @function5_bp.route('/launch_replay', methods=['POST'])
 def launch_replay():
