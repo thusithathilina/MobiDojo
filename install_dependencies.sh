@@ -25,20 +25,20 @@ sudo groupadd docker
 sudo usermod -aG docker $USER
 
 # docker image
-sudo docker pull oaisoftwarealliance/oai-amf:v2.1.0
-sudo docker pull oaisoftwarealliance/oai-nrf:v2.1.0
-sudo docker pull oaisoftwarealliance/oai-upf:v2.1.0
-sudo docker pull oaisoftwarealliance/oai-smf:v2.1.0
-sudo docker pull oaisoftwarealliance/oai-udr:v2.1.0
-sudo docker pull oaisoftwarealliance/oai-udm:v2.1.0
-sudo docker pull oaisoftwarealliance/oai-ausf:v2.1.0
-sudo docker pull oaisoftwarealliance/oai-upf-vpp:v2.1.0
-sudo docker pull oaisoftwarealliance/oai-nssf:v2.1.0
-sudo docker pull oaisoftwarealliance/oai-pcf:v2.1.0
-sudo docker pull oaisoftwarealliance/oai-lmf:v2.1.0
+sudo docker pull oaisoftwarealliance/oai-amf:v2.0.0
+sudo docker pull oaisoftwarealliance/oai-nrf:v2.0.0
+sudo docker pull oaisoftwarealliance/oai-upf:v2.0.0
+sudo docker pull oaisoftwarealliance/oai-smf:v2.0.0
+sudo docker pull oaisoftwarealliance/oai-udr:v2.0.0
+sudo docker pull oaisoftwarealliance/oai-udm:v2.0.0
+sudo docker pull oaisoftwarealliance/oai-ausf:v2.0.0
+sudo docker pull oaisoftwarealliance/oai-upf-vpp:v2.0.0
+sudo docker pull oaisoftwarealliance/oai-nssf:v2.0.0
+sudo docker pull oaisoftwarealliance/oai-pcf:v2.0.0
+sudo docker pull oaisoftwarealliance/oai-lmf:v2.0.0
 sudo docker pull oaisoftwarealliance/trf-gen-cn5g:latest
-sudo docker pull oaisoftwarealliance/oai-gnb:develop
-sudo docker pull oaisoftwarealliance/oai-nr-ue:develop
+sudo docker pull oaisoftwarealliance/oai-gnb:v2.1.0
+sudo docker pull oaisoftwarealliance/oai-nr-ue:v2.1.0
 docker pull onehouwong/oai-nr-ue:nr.attack.v2.1.0
 
 
