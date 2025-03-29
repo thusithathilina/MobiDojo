@@ -41,6 +41,8 @@ sudo docker pull oaisoftwarealliance/oai-gnb:v2.1.0
 sudo docker pull oaisoftwarealliance/oai-nr-ue:v2.1.0
 docker pull onehouwong/oai-nr-ue:nr.attack.v2.1.0
 
+# mysql-healthcheck permission update
+sudo chmod 755 oai/healthscripts/mysql*
 
 # Python
 sudo add-apt-repository -y ppa:deadsnakes/ppa
