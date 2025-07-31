@@ -77,8 +77,8 @@ services:
         networks:
             public_net:
                 ipv4_address: 192.168.70.135
-    oai_nrf_slice12:
-        container_name: "oai-nrf-slice12"
+    oai_nrf:
+        container_name: "oai-nrf"
         image: oaisoftwarealliance/oai-nrf:v2.0.0
         expose:
             - 80/tcp
@@ -88,20 +88,9 @@ services:
         networks:
             public_net:
                 ipv4_address: 192.168.70.136
-    oai_nrf_slice3:
-        container_name: "oai-nrf-slice3"
-        image: oaisoftwarealliance/oai-nrf:v2.0.0
-        expose:
-            - 80/tcp
-            - 8080/tcp
-        volumes:
-            - ./conf/slicing_slice3_config.yaml:/openair-nrf/etc/config.yaml
-        networks:
-            public_net:
-                ipv4_address: 192.168.70.137
     oai_amf:
         container_name: "oai-amf"
-        image: oaisoftwarealliance/oai-amf:v2.0.0 
+        image: oaisoftwarealliance/oai-amf:v2.1.0 
         expose:
             - 80/tcp
             - 8080/tcp
@@ -109,14 +98,13 @@ services:
         volumes:
             - ./conf/slicing_base_config.yaml:/openair-amf/etc/config.yaml
         depends_on:
-            - oai_nrf_slice12
-            - oai_nrf_slice3
+            - oai_nrf
             - oai_ausf
         networks:
             public_net:
                 ipv4_address: 192.168.70.138
-    oai_smf_slice1:
-        container_name: "oai-smf-slice1"
+    oai_smf:
+        container_name: "oai-smf"
         image: oaisoftwarealliance/oai-smf:v2.0.0
         expose:
             - 80/tcp
@@ -126,44 +114,12 @@ services:
             - ./conf/slicing_slice1_config.yaml:/openair-smf/etc/config.yaml
         depends_on:
             - oai_amf
-            - oai_nrf_slice12
+            - oai_nrf
         networks:
             public_net:
                 ipv4_address: 192.168.70.139
-    oai_smf_slice2:
-        container_name: "oai-smf-slice2"
-        image: oaisoftwarealliance/oai-smf:v2.0.0
-        expose:
-            - 80/tcp
-            - 8080/tcp
-            - 8805/udp
-        volumes:
-            - ./conf/slicing_slice2_config.yaml:/openair-smf/etc/config.yaml
-        depends_on:
-            - oai_amf
-            - oai_nrf_slice12
-        networks:
-            public_net:
-                ipv4_address: 192.168.70.140
-    oai_smf_slice3:
-        container_name: "oai-smf-slice3"
-        image: oaisoftwarealliance/oai-smf:v2.0.0
-        expose:
-            - 80/tcp
-            - 8080/tcp
-            - 8805/udp
-        volumes:
-            - ./conf/slicing_slice3_config.yaml:/openair-smf/etc/config.yaml
-        depends_on:
-            - oai_amf
-            - oai_nrf_slice3
-        extra_hosts:
-            - "vpp-upf.node.5gcn.mnc95.mcc208.3gppnetwork.org:192.168.70.201"
-        networks:
-            public_net:
-                ipv4_address: 192.168.70.141
-    oai_upf_slice1:
-        container_name: "oai-upf-slice1"
+    oai_upf:
+        container_name: "oai-upf"
         image: oaisoftwarealliance/oai-upf:v2.0.1
         expose:
             - 2152/udp
@@ -174,8 +130,8 @@ services:
         environment:
             - TZ=Europe/Paris
         depends_on:
-            - oai_nrf_slice12
-            - oai_smf_slice1
+            - oai_nrf
+            - oai_smf
         cap_add:
             - NET_ADMIN
             - SYS_ADMIN
@@ -187,33 +143,8 @@ services:
                 ipv4_address: 192.168.70.142
             public_net_access:
                 ipv4_address: 192.168.72.142
-    oai_upf_slice2:
-        container_name: "oai-upf-slice2"
-        image: oaisoftwarealliance/oai-upf:v2.0.1
-        expose:
-            - 2152/udp
-            - 8805/udp
-            - 8080/tcp
-        volumes:
-            - ./conf/slicing_slice2_config.yaml:/openair-upf/etc/config.yaml
-        environment:
-            - TZ=Europe/Paris
-        depends_on:
-            - oai_nrf_slice12
-            - oai_smf_slice2
-        cap_add:
-            - NET_ADMIN
-            - SYS_ADMIN
-        cap_drop:
-            - ALL
-        privileged: true
-        networks:
-            public_net:
-                ipv4_address: 192.168.70.143
-            public_net_access:
-                ipv4_address: 192.168.72.143
-    vpp_upf_slice3:
-        container_name: "vpp-upf-slice3"
+    vpp_upf:
+        container_name: "vpp-upf"
         image: oaisoftwarealliance/oai-upf-vpp:v2.0.0
         privileged: true
         environment:
@@ -242,8 +173,8 @@ services:
             - NRF_PORT=8080
             - HTTP_VERSION=2
         depends_on:
-            - oai_nrf_slice3
-            - oai_smf_slice3
+            - oai_nrf
+            - oai_smf
         healthcheck:
             test: /bin/bash -c "pgrep vpp"
             interval: 10s
